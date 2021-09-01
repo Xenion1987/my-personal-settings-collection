@@ -1,0 +1,11 @@
+[Unit]
+Description=Turn off the intel turbo mode at boot
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/env bash -c "echo 1 > /sys/devices/system/cpu/intel_pstate/no_turbo"
+
+[Install]
+WantedBy=multi-user.target
+
