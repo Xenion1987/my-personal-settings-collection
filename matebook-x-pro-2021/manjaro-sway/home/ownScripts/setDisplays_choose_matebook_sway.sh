@@ -58,22 +58,34 @@ function main {
         case $CHOICE in
 
             1)
-                wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
-                    --output ${DP_NAME_EXTERN} --off ;
+                if swaymsg output ${DP_NAME_INTERN} enable scale 2 pos 0 0; then
+                    swaymsg output ${DP_NAME_EXTERN} disable
+                fi
+
+                #wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
+                #    --output ${DP_NAME_EXTERN} --off ;
                 ;;
             2)
-                wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
-                    --output ${DP_NAME_EXTERN} --off ;
-                sleep 1 ;
-                wlr-randr --output ${DP_NAME_EXTERN} --on --preferred --scale 1.0 --pos 0,0 \
-                    --output ${DP_NAME_INTERN} --off ;
+                if swaymsg output ${DP_NAME_EXTERN} enable scale 1 pos 0 0; then
+                    swaymsg output ${DP_NAME_INTERN} disable
+                fi
+                
+                #wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
+                #    --output ${DP_NAME_EXTERN} --off ;
+                #sleep 1 ;
+                #wlr-randr --output ${DP_NAME_EXTERN} --on --preferred --scale 1.0 --pos 0,0 \
+                #    --output ${DP_NAME_INTERN} --off ;
                 ;;
             3)
-                wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
-                    --output ${DP_NAME_EXTERN} --off ;
-                sleep 1 ;
-                wlr-randr --output ${DP_NAME_EXTERN} --on --preferred --scale 1.0 --pos 0,0 \
-                    --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 3440,0 ;
+                if swaymsg output ${DP_NAME_EXTERN} enable scale 1 pos 0 0; then
+                    swaymsg output ${DP_NAME_INTERN} enable scale 2 pos 3440 0
+                fi
+
+                #wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
+                #    --output ${DP_NAME_EXTERN} --off ;
+                #sleep 1 ;
+                #wlr-randr --output ${DP_NAME_EXTERN} --on --preferred --scale 1.0 --pos 0,0 \
+                #    --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 3440,0 ;
                 ;;
             0|q)
                 clear && exit
@@ -88,5 +100,5 @@ function main {
     #done
 }
 
-checkDependencies;
+#checkDependencies;
 main;
