@@ -28,23 +28,25 @@
 	    "custom/weather"
     ],
     "modules-right": [
+        "tray",
         // "sway/language",
         "custom/github",
         // "custom/clipboard",
         "cpu",
         "memory",
         "temperature",
-        "custom/sunset",
         "idle_inhibitor",
-        "custom/playerctl",
-        "pulseaudio",
+        "custom/sunset",
         "custom/pacman",
-        "network",
+        "custom/vpn",
+	"network",
+	"pulseaudio",
+        //"custom/spotify",
+        "custom/playerctl",
         "bluetooth",
         "backlight",
         "battery",
 
-        "tray",
         "clock"
     ],
 
@@ -66,8 +68,8 @@
     },
 
     "clock": {
-        "interval": 60,
-        "format": "{:%e %b %Y %H:%M}",
+        "interval": 1,
+        "format": "{:%e %b %Y %H:%M:%S}",
         "tooltip": true,
         "tooltip-format": "<big>{:%B %Y}</big>\n<tt>{calendar}</tt>",
         "on-click": "swaymsg exec \\$calendar"
@@ -92,13 +94,21 @@
         },
         "on-click": "swaymsg exec \\$term_float htop"
     },
-
+    "custom/vpn": {
+        "format": "",
+        "exec": "echo '{\"class\": \"connected\"}'",
+        "exec-if": "test -d /proc/sys/net/ipv4/conf/tun0",
+        "return-type": "json",
+        "interval": 5
+    },
     "network": {
-        "interval": 5,
-        "format-wifi": " ",
+        "interface": "wlp0s20f3",
+	"interval": 1,
+        "format-wifi": "  {signalStrength}%",
         "format-ethernet": "",
         "format-disconnected": "睊",
-        "tooltip-format": "{ifname} ({essid}): {ipaddr}",
+        "tooltip-format": "SSID: {essid}\nIP:   {ipaddr}\nUp:   {bandwidthUpBits}\nDown: {bandwidthDownBits}",
+        //"tooltip-format": "{ifname} ({essid}): {ipaddr}\nUp:   {bandwidthUpBits}\nDown: {bandwidthDownBits}",
         "on-click": "swaymsg exec \\$term_float nmtui"
     },
 
@@ -136,8 +146,17 @@
         "tooltip-format": "{icon} {volume}% {format_source}",
         "on-click": "swaymsg exec \\$pulseaudio"
     },
-
+    "custom/spotify": {
+        "format": " {}",
+        "escape": true,
+        "return-type": "json",
+        "max-length": 40,
+        "interval": 30, // Remove this if your script is endless and write in loop
+        "exec": "$HOME/.config/waybar/mediaplayer.py 2> /dev/null", // Script in resources/custom_modules folder
+        "exec-if": "pgrep spotify"
+    },
     "temperature": {
+	"hwmon-path": "/sys/class/hwmon/hwmon5/temp1_input",
         "critical-threshold": 90,
         "interval": 5,
         "format": "{icon} {temperatureC}°C",
@@ -240,8 +259,8 @@
         "return-type": "json",
         "format": "{icon}",
         "format-icons": {
-            "Playing": "奈",
-            "Paused": ""
+            "Playing": "",
+            "Paused": ""
         },
         "exec": "playerctl metadata --format '{\"alt\": \"{{status}}\", \"tooltip\": \"{{playerName}}:  {{markup_escape(title)}} - {{markup_escape(artist)}}\" }'",
         "on-click": "playerctl play-pause; pkill -RTMIN+5 waybar",
