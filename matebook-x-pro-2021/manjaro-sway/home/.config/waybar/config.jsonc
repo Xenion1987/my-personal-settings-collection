@@ -18,7 +18,7 @@
     "position": "top",
 
     "modules-left": [
-	    "custom/menu", 
+	    //"custom/menu", 
 	    "sway/workspaces", 
 	    "custom/scratchpad"
     ],
@@ -38,7 +38,8 @@
         "idle_inhibitor",
         "custom/sunset",
         "custom/pacman",
-        "custom/vpn",
+        "custom/vpnOn",
+        //"custom/vpnOff",
 	"network",
 	"pulseaudio",
         //"custom/spotify",
@@ -94,13 +95,22 @@
         },
         "on-click": "swaymsg exec \\$term_float htop"
     },
-    "custom/vpn": {
+    "custom/vpnOn": {
         "format": "",
         "exec": "echo '{\"class\": \"connected\"}'",
         "exec-if": "test -d /proc/sys/net/ipv4/conf/tun0",
         "return-type": "json",
+        "on-click": "./startStopVPN.sh stop",
         "interval": 5
     },
+    // "custom/vpnOff": {
+    //     "format": "NoVPN",
+    //     "exec": "echo '{\"class\": \"connected\"}'",
+    //     "exec-if": "! test -d /proc/sys/net/ipv4/conf/tun0",
+    //     "return-type": "json",
+    //     "on-click": "./startStopVPN.sh start",
+    //     "interval": 5
+    // },
     "network": {
         "interface": "wlp0s20f3",
 	"interval": 1,
@@ -108,7 +118,6 @@
         "format-ethernet": "",
         "format-disconnected": "睊",
         "tooltip-format": "SSID: {essid}\nIP:   {ipaddr}\nUp:   {bandwidthUpBits}\nDown: {bandwidthDownBits}",
-        //"tooltip-format": "{ifname} ({essid}): {ipaddr}\nUp:   {bandwidthUpBits}\nDown: {bandwidthDownBits}",
         "on-click": "swaymsg exec \\$term_float nmtui"
     },
 
