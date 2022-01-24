@@ -78,7 +78,7 @@ function main {
                 ;;
             3)
                 if swaymsg output ${DP_NAME_EXTERN} enable scale 1 pos 0 0; then
-                    swaymsg output ${DP_NAME_INTERN} enable scale 2 pos 3440 0
+                    swaymsg output ${DP_NAME_INTERN} enable scale 2 pos 1024 1440
                 fi
 
                 #wlr-randr --output ${DP_NAME_INTERN} --on --preferred --scale 2.0 --pos 0,0 \
