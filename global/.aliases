@@ -1,0 +1,1 @@
+alias src='. "${HOME}/.${SHELL##*/}rc"'
