@@ -1,0 +1,138 @@
+function ttfbcheck() {
+  echo " Date               | Connect  |   TTFB   |   Total  | HTTP-Code | Avg. TTFB"
+  INT=1
+  DATUM=$(date "+%d.%m.%Y %H:%M:%S")
+  VALUES=$(curl -o /dev/null -H 'Cache-Control: no-cache' -s -w "%{time_connect} | %{time_starttransfer} | %{time_total} | %{http_code}      " $1)
+  TTFB1=$(echo $VALUES | tr "," "." | awk '{print $3}')
+  echo -e "$DATUM | $VALUES | $TTFB1"
+  while true; do
+    DATUM=$(date "+%d.%m.%Y %H:%M:%S")
+    VALUES=$(curl -o /dev/null -H 'Cache-Control: no-cache' -s -w "%{time_connect} | %{time_starttransfer} | %{time_total} | %{http_code}      " $1)
+    TTFB2=$(echo $VALUES | tr "," "." | awk '{print $3}')
+    TTFB1=$(echo "scale=6 ; $TTFB1 + $TTFB2" | bc)
+    TTFBA=$(echo "scale=6 ; $TTFB1 / $INT" | bc)
+    echo -e "$DATUM | $VALUES | $TTFBA"
+    ((INT++))
+    sleep 1
+  done
+
+}
+function cheat() {
+  curl -sS "https://cheat.sh/${1}"
+}
+## Fix SSH agent forwarding. Best added to .bashrc/.zshrc
+function fixssh() {
+  if [[ -n ${TMUX} ]]; then
+    eval "$(grep '^SSH_' < <(tmux show-env -s))"
+  else
+    return 1
+  fi
+}
+#########################################################
+# tmux functions
+#########################################################
+# Make short hostname only if its not an IP address
+function __tm_get_hostname() {
+  local HOST
+  HOST="$(echo $* | rev | cut -d ' ' -f 1 | rev)"
+  if echo $HOST | grep -P "^([0-9]+\.){3}[0-9]+" -q; then
+    echo $HOST
+  else
+    echo $HOST | cut -d . -f 1
+  fi
+}
+
+function __tm_get_current_window() {
+  tmux list-windows | awk -F : '/\(active\)$/{print $1}'
+}
+
+# Rename window according to __tm_get_hostname and then restore it after the command
+function __tm_command() {
+  case "$(ps -p $(ps -p $$ -o ppid=) -o comm= | cut -d : -f 1)" in
+  tmux*)
+    __tm_window=$(__tm_get_current_window)
+    trap "tmux set-window-option -t $__tm_window automatic-rename on 1>/dev/null" RETURN
+    tmux rename-window "$(__tm_get_hostname $*)"
+    ;;
+  esac
+  command "$@"
+}
+
+#########################################################
+# tmux wrapper
+#########################################################
+function tmux_auto_attach() {
+  if [[ -z ${TMUX} ]]; then
+    if grep -wq "^default" < <(tmux ls); then
+      tmux attach -t "default"
+    else
+      tmux new -s "default"
+    fi
+  fi
+}
+function tml() {
+  tmux ls
+}
+function tmn() {
+  if [[ -n $1 ]]; then
+    tmux new -s "${1}"
+  else
+    tmux new -s "default"
+  fi
+}
+function tma() {
+  local MY_SHELL
+  MY_SHELL=$(awk -F'/' '{print $NF}' <<<"${SHELL}")
+  TMUX_SESSIONS=$(tmux ls 2>/dev/null | awk -F: '{print $1}')
+  if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 1 ]]; then
+    i=1
+    while read -r TMUX_SESSION; do
+      echo "${i}: ${TMUX_SESSION}"
+      ((++i))
+    done <<<"${TMUX_SESSIONS}"
+    echo -n "Choose session to join: "
+    if [[ "${MY_SHELL}" == "zsh" ]]; then
+      read -r -k1 CHOICE
+    else
+      read -r -n1 CHOICE
+    fi
+    if [[ "${CHOICE}" =~ [0-9]+ ]]; then
+      tmux attach -t "$(tmux ls | awk -F':' '{print $1}' | sed -n "${CHOICE}p")"
+      echo
+    else
+      echo " --> Wrong choice - cancelled"
+      return 1
+    fi
+  else
+    tmux attach
+  fi
+}
+function tmk() {
+  local MY_SHELL
+  MY_SHELL=$(awk -F'/' '{print $NF}' <<<"${SHELL}")
+  TMUX_SESSIONS=$(tmux ls 2>/dev/null | awk -F: '{print $1}')
+  if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 0 ]]; then
+    if [[ $1 == "all" ]]; then
+      tmux kill-server && echo "All tmux sessions killed"
+    else
+      i=1
+      while read -r TMUX_SESSION; do
+        echo "${i}: ${TMUX_SESSION}"
+        ((++i))
+      done <<<"${TMUX_SESSIONS}"
+      echo -n "Choose session to kill: "
+      if [[ "${MY_SHELL}" == "zsh" ]]; then
+        read -r -k1 CHOICE
+      else
+        read -r -n1 CHOICE
+      fi
+      if [[ "${CHOICE}" =~ [0-9]+ ]]; then
+        tmux kill-session -t "$(tmux ls | awk -F':' '{print $1}' | sed -n "${CHOICE}p")"
+        echo
+      else
+        echo " --> Wrong choice - cancelled"
+        return 1
+      fi
+    fi
+  fi
+}

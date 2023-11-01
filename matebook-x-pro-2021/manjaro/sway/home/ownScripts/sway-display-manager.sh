@@ -1,6 +1,10 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 # https://github.com/Chrysostomus/bmenu
+
+DP_NAME_INTERN='eDP-1'  #Name of internal Display
+DP_NAME_EXTERN='DP-3'   #Name of external Display
+
 
 function checkDependencies() {
     if ! wlr-randr &> /dev/null ; then 
@@ -14,47 +18,39 @@ function checkDependencies() {
 }
 
 function getConnectedDisplays() {
-     WLR_RANDR_OUTPUT=$(wlr-randr); 
-     DP_NAMES=$(grep -E '^[e]?DP[-]?[0-9]+' <<< "${WLR_RANDR_OUTPUT}" | awk '{print $1}'); 
-     while read -r DP_NAME; do 
-        DP_ENABLED=$(grep -A2 -E "\<${DP_NAME}\>" <<< "${WLR_RANDR_OUTPUT}"|grep "Enabled"|grep -Eo "(yes|no)"); 
-        #if [[ "${DP_ENABLED}" == "yes" ]]; then 
-        #    DP_ENABLED='--on'; 
-        #elif [[ "${DP_ENABLED}" == "no" ]]; then 
-        #    DP_ENABLED='--off'; 
-        #fi; 
-        echo -e "DP_NAME :: $DP_NAME \nDP_ENABLED :: $DP_ENABLED "; 
-    done <<< "${DP_NAMES}"
+    DISPLAYS=$(swaymsg -t get_outputs | jq -r '.[].name')
 }
 
 function main {
 
     #while true ; do
         clear
-        echo -e "      ┌──────┐"
-        echo -e "      |intern|"
-        echo -e "      └──────┘"
-        echo -e "        [1]"
-        echo -e "------------------"
-        echo -e "    ┌──────────┐"
-        echo -e "    |  extern  |"
-        echo -e "    └──────────┘"
-        echo -e "        [2]"
-        echo -e "------------------"
-        echo -e "    ┌──────────┐"
-        echo -e "    |  extern  |"
-        echo -e "    └──────────┘"
-        echo -e "      ┌──────┐"
-        echo -e "      |intern|"
-        echo -e "      └──────┘"
-        echo -e "        [3]"
-        echo -e "------------------"
+        echo -e "       ┌──────┐"
+        echo -e "       |intern|"
+        echo -e "       └──────┘"
+        echo -e "         [1]"
+        echo -e "--------------------"
+        echo -e "     ┌──────────┐"
+        echo -e "     |  extern  |"
+        echo -e "     └──────────┘"
+        echo -e "         [2]"
+        echo -e "--------------------"
+        echo -e "     ┌──────────┐"
+        echo -e "     |  extern  |"
+        echo -e "     └──────────┘"
+        echo -e "       ┌──────┐"
+        echo -e "       |intern|"
+        echo -e "       └──────┘"
+        echo -e "         [3]"
+        echo -e "--------------------"
+        echo -e "┌──────┐┌──────────┐"
+        echo -e "|intern||  extern  |"
+        echo -e "└──────┘└──────────┘"
+        echo -e "         [4]"
+        echo -e "--------------------"
 
         read -rs -n1 CHOICE
-        
-        DP_NAME_INTERN='eDP-1'  #Name of internal Display
-        DP_NAME_EXTERN='DP-1'   #Name of external Display
-        
+                
         case $CHOICE in
 
             1)
