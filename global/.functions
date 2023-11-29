@@ -3,23 +3,25 @@ function ttfbcheck() {
   INT=1
   DATUM=$(date "+%d.%m.%Y %H:%M:%S")
   VALUES=$(curl -o /dev/null -H 'Cache-Control: no-cache' -s -w "%{time_connect} | %{time_starttransfer} | %{time_total} | %{http_code}      " $1)
-  TTFB1=$(echo $VALUES | tr "," "." | awk '{print $3}')
+  TTFB1=$(echo "$VALUES" | tr "," "." | awk '{print $3}')
   echo -e "$DATUM | $VALUES | $TTFB1"
   while true; do
     DATUM=$(date "+%d.%m.%Y %H:%M:%S")
     VALUES=$(curl -o /dev/null -H 'Cache-Control: no-cache' -s -w "%{time_connect} | %{time_starttransfer} | %{time_total} | %{http_code}      " $1)
-    TTFB2=$(echo $VALUES | tr "," "." | awk '{print $3}')
+    TTFB2=$(echo "$VALUES" | tr "," "." | awk '{print $3}')
     TTFB1=$(echo "scale=6 ; $TTFB1 + $TTFB2" | bc)
     TTFBA=$(echo "scale=6 ; $TTFB1 / $INT" | bc)
     echo -e "$DATUM | $VALUES | $TTFBA"
     ((INT++))
     sleep 1
   done
-
 }
 function cheat() {
   curl -sS "https://cheat.sh/${1}"
 }
+#########################################################
+# tmux functions
+#########################################################
 ## Fix SSH agent forwarding. Best added to .bashrc/.zshrc
 function fixssh() {
   if [[ -n ${TMUX} ]]; then
@@ -28,36 +30,46 @@ function fixssh() {
     return 1
   fi
 }
-#########################################################
-# tmux functions
-#########################################################
 # Make short hostname only if its not an IP address
 function __tm_get_hostname() {
   local HOST
-  HOST="$(echo $* | rev | cut -d ' ' -f 1 | rev)"
-  if echo $HOST | grep -P "^([0-9]+\.){3}[0-9]+" -q; then
-    echo $HOST
+  HOST="$(echo "$*" | rev | cut -d ' ' -f 1 | rev)"
+  if echo "${HOST}" | grep -E "^([0-9]+\.){3}[0-9]+" -q; then
+    echo "${HOST}"
   else
-    echo $HOST | cut -d . -f 1
+    echo "${HOST}" | cut -d . -f 1
   fi
 }
-
 function __tm_get_current_window() {
   tmux list-windows | awk -F : '/\(active\)$/{print $1}'
 }
-
 # Rename window according to __tm_get_hostname and then restore it after the command
 function __tm_command() {
-  case "$(ps -p $(ps -p $$ -o ppid=) -o comm= | cut -d : -f 1)" in
+  case "$(ps -p "$(ps -p $$ -o ppid=)" -o comm= | cut -d : -f 1)" in
   tmux*)
     __tm_window=$(__tm_get_current_window)
-    trap "tmux set-window-option -t $__tm_window automatic-rename on 1>/dev/null" RETURN
-    tmux rename-window "$(__tm_get_hostname $*)"
+    local my_shell=${SHELL##*/}
+    local my_return
+    case ${my_shell} in
+    zsh)
+      my_return="EXIT"
+      # shellcheck disable=SC2064 # Use single quotes, otherwise this expands now rather than when signalled
+      trap "tmux set-window-option -t $__tm_window automatic-rename on 1>/dev/null; return $?" ${my_return}
+      ;;
+    *)
+      my_return="RETURN"
+      # shellcheck disable=SC2064 # Use single quotes, otherwise this expands now rather than when signalled
+      trap "tmux set-window-option -t $__tm_window automatic-rename on 1>/dev/null" ${my_return}
+      ;;
+    esac
+    tmux rename-window "$(__tm_get_hostname "$*")"
     ;;
   esac
   command "$@"
 }
-
+function ssh() {
+  __tm_command ssh "$@"
+}
 #########################################################
 # tmux wrapper
 #########################################################
@@ -70,9 +82,11 @@ function tmux_auto_attach() {
     fi
   fi
 }
+# List tmux sessions
 function tml() {
   tmux ls
 }
+# Create new tmux session
 function tmn() {
   if [[ -n $1 ]]; then
     tmux new -s "${1}"
@@ -80,9 +94,10 @@ function tmn() {
     tmux new -s "default"
   fi
 }
+# Interactivly attach to a existing tmux session
 function tma() {
   local MY_SHELL
-  MY_SHELL=$(awk -F'/' '{print $NF}' <<<"${SHELL}")
+  MY_SHELL=${SHELL##*/}
   TMUX_SESSIONS=$(tmux ls 2>/dev/null | awk -F: '{print $1}')
   if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 1 ]]; then
     i=1
@@ -107,9 +122,10 @@ function tma() {
     tmux attach
   fi
 }
+# Interactivly kill a tmux session or kill all tmux sessions
 function tmk() {
   local MY_SHELL
-  MY_SHELL=$(awk -F'/' '{print $NF}' <<<"${SHELL}")
+  MY_SHELL=${SHELL##*/}
   TMUX_SESSIONS=$(tmux ls 2>/dev/null | awk -F: '{print $1}')
   if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 0 ]]; then
     if [[ $1 == "all" ]]; then
