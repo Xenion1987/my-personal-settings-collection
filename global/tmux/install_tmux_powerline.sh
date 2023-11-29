@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+if [[ ! -f ~/.tmux/plugins/tpm/bin/install_plugins ]]; then
+  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+fi
 cp -v .tmux.conf ~/
 tmux new ~/.tmux/plugins/tpm/bin/install_plugins
 
