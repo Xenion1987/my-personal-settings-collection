@@ -45,7 +45,11 @@ function __tm_get_current_window() {
 }
 # Rename window according to __tm_get_hostname and then restore it after the command
 function __tm_command() {
-  case "$(ps -p "$(ps -p $$ -o ppid=)" -o comm= | cut -d : -f 1)" in
+  local ppid
+  local comm
+  ppid=$(ps -p $$ -o ppid= | tr -d '[:space:]')
+  comm=$(ps -p ${ppid} -o comm= | cut -d : -f 1)
+  case "$comm" in
   tmux*)
     __tm_window=$(__tm_get_current_window)
     local my_shell=${SHELL##*/}
