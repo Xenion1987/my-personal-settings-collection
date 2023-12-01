@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 
 if [[ ! -f ~/.tmux/plugins/tpm/bin/install_plugins ]]; then
-  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+  echo "Cloning TPM to '~/.tmux/plugins/tpm'"
+  git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm >/dev/null
 fi
-curl -s https://raw.githubusercontent.com/Xenion1987/my-personal-settings-collection/main/global/tmux/.tmux.conf -o ~/.tmux.conf
+echo "Getting '.tmux.conf' from Repo"
+curl -sSL https://raw.githubusercontent.com/Xenion1987/my-personal-settings-collection/main/global/tmux/.tmux.conf -o ~/.tmux.conf
+echo "Install TMUX plugins"
 tmux new ~/.tmux/plugins/tpm/bin/install_plugins
-
+echo "Customize tmux-powerline"
 mkdir -p ~/.config/tmux/plugins
 if [[ ! -d ~/.config/tmux-powerline ]] && [[ ! -L ~/.config/tmux-powerline ]]; then
   ln -s ~/.tmux/plugins/tmux-powerline ~/.config/tmux-powerline
