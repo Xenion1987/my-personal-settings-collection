@@ -7,7 +7,7 @@ fi
 echo "Getting '.tmux.conf' from Repo"
 curl -sSL https://raw.githubusercontent.com/Xenion1987/my-personal-settings-collection/main/global/tmux/.tmux.conf -o ~/.tmux.conf
 echo "Install TMUX plugins"
-tmux new ~/.tmux/plugins/tpm/bin/install_plugins
+tmux new-session -d -s install_plugins '~/.tmux/plugins/tpm/bin/install_plugins'
 echo "Customize tmux-powerline"
 mkdir -p ~/.config/tmux/plugins
 if [[ ! -d ~/.config/tmux-powerline ]] && [[ ! -L ~/.config/tmux-powerline ]]; then
