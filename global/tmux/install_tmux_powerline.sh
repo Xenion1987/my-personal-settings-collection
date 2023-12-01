@@ -3,7 +3,7 @@
 if [[ ! -f ~/.tmux/plugins/tpm/bin/install_plugins ]]; then
   git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi
-cp -v .tmux.conf ~/
+curl -s https://raw.githubusercontent.com/Xenion1987/my-personal-settings-collection/main/global/tmux/.tmux.conf -o ~/.tmux.conf
 tmux new ~/.tmux/plugins/tpm/bin/install_plugins
 
 mkdir -p ~/.config/tmux/plugins
