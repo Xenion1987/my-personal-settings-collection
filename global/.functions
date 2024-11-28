@@ -1,3 +1,15 @@
+function fork-sync-upstream() {
+  if grep -qw upstream < <(git remote); then
+    if grep -q "\* main" < <(git branch); then
+      git fetch upstream && git pull upstream main && git push origin main
+    else
+      echo "You are not on the 'main' branch"
+    fi
+  fi
+}
+function get-function() {
+  sed -rn "/^function (.*)${1}(.*)/,/^\}$/p" ${HOME}/.functions
+}
 function ttfbcheck() {
   echo " Date               | Connect  |   TTFB   |   Total  | HTTP-Code | Avg. TTFB"
   INT=1
@@ -18,6 +30,18 @@ function ttfbcheck() {
 }
 function cheat() {
   curl -sS "https://cheat.sh/${1}"
+}
+function gcx() {
+  if [[ -d ".git" ]]; then
+    echo -n "git config user.name Xenion1987... "
+    if git config user.name Xenion1987 &>/dev/null; then echo "done"; else echo "error"; fi
+    echo -n "git config user.email 39803750+Xenion1987@users.noreply.github.com... "
+    if git config user.email 39803750+Xenion1987@users.noreply.github.com &>/dev/null; then echo "done"; else echo "error"; fi
+  else
+    echo "Not in a Git Repository!"
+    return 1
+  fi
+
 }
 #########################################################
 # tmux functions
@@ -45,11 +69,7 @@ function __tm_get_current_window() {
 }
 # Rename window according to __tm_get_hostname and then restore it after the command
 function __tm_command() {
-  local ppid
-  local comm
-  ppid=$(ps -p $$ -o ppid= | tr -d '[:space:]')
-  comm=$(ps -p ${ppid} -o comm= | cut -d : -f 1)
-  case "$comm" in
+  case "$(ps -p "$(ps -p $$ -o ppid= | tr -d '[[:space:]]')" -o comm= | cut -d : -f 1)" in
   tmux*)
     __tm_window=$(__tm_get_current_window)
     local my_shell=${SHELL##*/}
@@ -79,10 +99,10 @@ function ssh() {
 #########################################################
 function tmux_auto_attach() {
   if [[ -z ${TMUX} ]]; then
-    if grep -wq "^default" < <(tmux ls); then
-      tmux attach -t "default"
+    if grep -wq "^main" < <(tmux ls); then
+      tmux attach -t "main"
     else
-      tmux new -s "default"
+      tmux new -s "main"
     fi
   fi
 }
@@ -95,7 +115,7 @@ function tmn() {
   if [[ -n $1 ]]; then
     tmux new -s "${1}"
   else
-    tmux new -s "default"
+    tmux new -s "main"
   fi
 }
 # Interactivly attach to a existing tmux session
@@ -103,27 +123,31 @@ function tma() {
   local MY_SHELL
   MY_SHELL=${SHELL##*/}
   TMUX_SESSIONS=$(tmux ls 2>/dev/null | awk -F: '{print $1}')
-  if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 1 ]]; then
-    i=1
-    while read -r TMUX_SESSION; do
-      echo "${i}: ${TMUX_SESSION}"
-      ((++i))
-    done <<<"${TMUX_SESSIONS}"
-    echo -n "Choose session to join: "
-    if [[ "${MY_SHELL}" == "zsh" ]]; then
-      read -r -k1 CHOICE
-    else
-      read -r -n1 CHOICE
-    fi
-    if [[ "${CHOICE}" =~ [0-9]+ ]]; then
-      tmux attach -t "$(tmux ls | awk -F':' '{print $1}' | sed -n "${CHOICE}p")"
-      echo
-    else
-      echo " --> Wrong choice - cancelled"
-      return 1
-    fi
+  if [[ -n "${1}" ]]; then
+    tmux attach -t "${1}"
   else
-    tmux attach
+    if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 1 ]]; then
+      i=1
+      while read -r TMUX_SESSION; do
+        echo "${i}: ${TMUX_SESSION}"
+        ((++i))
+      done <<<"${TMUX_SESSIONS}"
+      echo -n "Choose session to join: "
+      if [[ "${MY_SHELL}" == "zsh" ]]; then
+        read -r -k1 CHOICE
+      else
+        read -r -n1 CHOICE
+      fi
+      if [[ "${CHOICE}" =~ [0-9]+ ]]; then
+        tmux attach -t "$(tmux ls | awk -F':' '{print $1}' | sed -n "${CHOICE}p")"
+        echo
+      else
+        echo " --> Wrong choice - cancelled"
+        return 1
+      fi
+    else
+      tmux attach
+    fi
   fi
 }
 # Interactivly kill a tmux session or kill all tmux sessions
@@ -131,10 +155,14 @@ function tmk() {
   local MY_SHELL
   MY_SHELL=${SHELL##*/}
   TMUX_SESSIONS=$(tmux ls 2>/dev/null | awk -F: '{print $1}')
-  if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 0 ]]; then
-    if [[ $1 == "all" ]]; then
-      tmux kill-server && echo "All tmux sessions killed"
-    else
+  if [[ -n "${1}" ]]; then
+      if [[ "${1}" == "all" ]]; then
+        tmux kill-server && echo "All tmux sessions killed"
+      else
+        tmux kill-session -t "${1}"
+      fi
+  else
+    if [[ $(echo "${TMUX_SESSIONS}" | grep -cEv "^$") -gt 0 ]]; then
       i=1
       while read -r TMUX_SESSION; do
         echo "${i}: ${TMUX_SESSION}"
